@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import CustomCursor from "@/components/CustomCursor";
 import FloatingHearts from "@/components/FloatingHearts";
+import LoadingScreen from "@/components/LoadingScreen";
 import StepWelcome from "@/components/steps/StepWelcome";
 
 const StepLetter = lazy(() => import("@/components/steps/StepLetter"));
@@ -12,7 +13,12 @@ const StepProposal = lazy(() => import("@/components/steps/StepProposal"));
 
 const Index = () => {
   const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(true);
   const next = () => setStep((s) => s + 1);
+
+  if (loading) {
+    return <LoadingScreen onDone={() => setLoading(false)} />;
+  }
 
   return (
     <main className="relative min-h-screen overflow-x-hidden">

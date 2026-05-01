@@ -170,6 +170,10 @@
     animation: pulseGlow 2.2s ease-in-out infinite;
   }
 
+  .animate-loadingProgress {
+    animation: loadingProgress 9s linear forwards;
+  }
+
   .animate-float-up {
     animation: floatUp linear infinite;
   }
@@ -188,6 +192,12 @@
         0 15px 50px -5px hsla(43, 90%, 60%, 0.7),
         inset 0 1px 0 hsla(0, 0%, 100%, 0.6);
       transform: scale(1.04);
+    }
+  }
+
+  @keyframes loadingProgress {
+    to {
+      width: 100%;
     }
   }
 
