@@ -11,15 +11,18 @@ const LoadingScreen = ({ onDone }: LoadingScreenProps) => {
   useEffect(() => {
     const timer = window.setTimeout(onDone, 9000);
 
-    if (audioRef.current) {
+    const playAudio = async () => {
+      if (!audioRef.current) return;
       audioRef.current.load();
-      const playPromise = audioRef.current.play();
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(() => {
-          // ignore autoplay block, audio will still be attempted
-        });
+      audioRef.current.volume = 0.85;
+      try {
+        await audioRef.current.play();
+      } catch {
+        // Autoplay may be blocked by the browser.
       }
-    }
+    };
+
+    playAudio();
 
     return () => {
       window.clearTimeout(timer);
@@ -30,8 +33,17 @@ const LoadingScreen = ({ onDone }: LoadingScreenProps) => {
     };
   }, [onDone]);
 
+  const resumeAudio = () => {
+    if (!audioRef.current || !audioRef.current.paused) return;
+    audioRef.current.play().catch(() => {});
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 text-white">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 text-white"
+      onClick={resumeAudio}
+      onTouchStart={resumeAudio}
+    >
       <div className="relative mx-4 w-full max-w-4xl overflow-hidden rounded-[2rem] border border-pink-400/50 bg-slate-900/95 shadow-2xl shadow-pink-500/20">
         <img
           src="/image-360563-1770965245.jpg"
