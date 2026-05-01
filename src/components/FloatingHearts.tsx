@@ -3,7 +3,7 @@ import { useMemo } from "react";
 const FloatingHearts = () => {
   const hearts = useMemo(
     () =>
-      Array.from({ length: 24 }, (_, i) => ({
+      Array.from({ length: 12 }, (_, i) => ({
         id: i,
         left: Math.random() * 100,
         size: 14 + Math.random() * 28,
@@ -35,7 +35,8 @@ const FloatingHearts = () => {
             animationDuration: `${h.duration}s`,
             animationDelay: `${h.delay}s`,
             ["--drift" as string]: `${h.drift}px`,
-            filter: "drop-shadow(0 0 12px hsla(340, 90%, 70%, 0.7))",
+            textShadow: "0 0 12px hsla(340, 90%, 70%, 0.7)",
+            willChange: "transform, opacity",
           }}
         >
           {h.emoji}
