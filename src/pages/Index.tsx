@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import CustomCursor from "@/components/CustomCursor";
 import FloatingHearts from "@/components/FloatingHearts";
 import StepWelcome from "@/components/steps/StepWelcome";
-import StepLetter from "@/components/steps/StepLetter";
-import StepLoveTest from "@/components/steps/StepLoveTest";
-import StepMarry from "@/components/steps/StepMarry";
-import StepKing from "@/components/steps/StepKing";
-import StepProposal from "@/components/steps/StepProposal";
+
+const StepLetter = lazy(() => import("@/components/steps/StepLetter"));
+const StepLoveTest = lazy(() => import("@/components/steps/StepLoveTest"));
+const StepMarry = lazy(() => import("@/components/steps/StepMarry"));
+const StepKing = lazy(() => import("@/components/steps/StepKing"));
+const StepProposal = lazy(() => import("@/components/steps/StepProposal"));
 
 const Index = () => {
   const [step, setStep] = useState(0);
@@ -21,11 +22,15 @@ const Index = () => {
       <div className="relative z-10">
         <AnimatePresence mode="wait">
           {step === 0 && <StepWelcome key="s0" onNext={next} />}
-          {step === 1 && <StepLetter key="s1" onNext={next} />}
-          {step === 2 && <StepLoveTest key="s2" onNext={next} />}
-          {step === 3 && <StepMarry key="s3" onNext={next} />}
-          {step === 4 && <StepKing key="s4" onNext={next} />}
-          {step >= 5 && <StepProposal key="s5" />}
+          {step > 0 && (
+            <Suspense key={`s${step}`} fallback={null}>
+              {step === 1 && <StepLetter onNext={next} />}
+              {step === 2 && <StepLoveTest onNext={next} />}
+              {step === 3 && <StepMarry onNext={next} />}
+              {step === 4 && <StepKing onNext={next} />}
+              {step >= 5 && <StepProposal />}
+            </Suspense>
+          )}
         </AnimatePresence>
       </div>
     </main>

@@ -1,93 +1,97 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface Trail {
-  id: number;
-  x: number;
-  y: number;
-  type: "heart" | "sparkle";
-  size: number;
-  rotation: number;
+  el: HTMLSpanElement;
+  bornAt: number;
+  life: number;
 }
 
 const CustomCursor = () => {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [trails, setTrails] = useState<Trail[]>([]);
-  const lastEmit = useRef(0);
-  const idRef = useRef(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      setPos({ x: e.clientX, y: e.clientY });
-      const now = performance.now();
-      if (now - lastEmit.current > 40) {
-        lastEmit.current = now;
-        const type: "heart" | "sparkle" = Math.random() > 0.5 ? "heart" : "sparkle";
-        const id = idRef.current++;
-        setTrails((prev) => [
-          ...prev.slice(-22),
-          {
-            id,
-            x: e.clientX + (Math.random() - 0.5) * 16,
-            y: e.clientY + (Math.random() - 0.5) * 16,
-            type,
-            size: 12 + Math.random() * 10,
-            rotation: Math.random() * 360,
-          },
-        ]);
-        setTimeout(() => {
-          setTrails((prev) => prev.filter((t) => t.id !== id));
-        }, 900);
-      }
+    if (typeof window === "undefined") return;
+    if (matchMedia("(hover: none)").matches) return;
+
+    const root = rootRef.current;
+    const ring = ringRef.current;
+    if (!root || !ring) return;
+
+    let mouseX = -100;
+    let mouseY = -100;
+    let lastEmit = 0;
+    let rafId = 0;
+    const trails: Trail[] = [];
+
+    const onMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     };
-    window.addEventListener("mousemove", handleMove);
-    return () => window.removeEventListener("mousemove", handleMove);
+
+    const tick = (now: number) => {
+      // move ring
+      ring.style.transform = `translate3d(${mouseX - 14}px, ${mouseY - 14}px, 0)`;
+
+      // emit trail at most every 60ms
+      if (now - lastEmit > 60) {
+        lastEmit = now;
+        const isHeart = Math.random() > 0.5;
+        const span = document.createElement("span");
+        span.textContent = isHeart ? "💗" : "✨";
+        span.className = "cursor-trail";
+        const size = 12 + Math.random() * 10;
+        span.style.cssText = `position:absolute;left:0;top:0;font-size:${size}px;will-change:transform,opacity;transform:translate3d(${
+          mouseX - size / 2
+        }px,${mouseY - size / 2}px,0) rotate(${Math.random() * 360}deg);pointer-events:none;`;
+        root.appendChild(span);
+        trails.push({ el: span, bornAt: now, life: 800 });
+      }
+
+      // age trails
+      for (let i = trails.length - 1; i >= 0; i--) {
+        const t = trails[i];
+        const age = (now - t.bornAt) / t.life;
+        if (age >= 1) {
+          t.el.remove();
+          trails.splice(i, 1);
+        } else {
+          t.el.style.opacity = String(1 - age);
+        }
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("mousemove", onMove, { passive: true });
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(rafId);
+      trails.forEach((t) => t.el.remove());
+    };
   }, []);
 
-  // Hide on touch devices
-  if (typeof window !== "undefined" && matchMedia("(hover: none)").matches) {
-    return null;
-  }
-
   return (
-    <div className="pointer-events-none fixed inset-0 z-[9999]">
-      {/* Main cursor: gold ring with rose dot */}
+    <div ref={rootRef} className="pointer-events-none fixed inset-0 z-[9999]">
       <div
-        className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform duration-75"
-        style={{ left: pos.x, top: pos.y }}
-      >
-        <div
-          className="w-7 h-7 rounded-full border-2"
-          style={{
-            borderColor: "hsl(43 90% 70%)",
-            boxShadow: "0 0 20px hsla(43, 90%, 70%, 0.9), 0 0 40px hsla(340, 82%, 60%, 0.5)",
-            background: "radial-gradient(circle, hsla(340, 82%, 60%, 0.5) 0%, transparent 70%)",
-          }}
-        />
-      </div>
-      {trails.map((t) => (
-        <span
-          key={t.id}
-          className="absolute -translate-x-1/2 -translate-y-1/2 select-none"
-          style={{
-            left: t.x,
-            top: t.y,
-            fontSize: t.size,
-            transform: `translate(-50%, -50%) rotate(${t.rotation}deg)`,
-            animation: "cursorTrailFade 0.9s ease-out forwards",
-            filter: t.type === "heart"
-              ? "drop-shadow(0 0 6px hsla(340, 90%, 70%, 0.9))"
-              : "drop-shadow(0 0 6px hsla(43, 90%, 75%, 0.95))",
-          }}
-        >
-          {t.type === "heart" ? "💗" : "✨"}
-        </span>
-      ))}
-      <style>{`
-        @keyframes cursorTrailFade {
-          0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-          100% { opacity: 0; transform: translate(-50%, -120%) scale(0.4); }
-        }
-      `}</style>
+        ref={ringRef}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: 28,
+          height: 28,
+          borderRadius: "9999px",
+          border: "2px solid hsl(43 90% 70%)",
+          boxShadow:
+            "0 0 20px hsla(43, 90%, 70%, 0.9), 0 0 40px hsla(340, 82%, 60%, 0.5)",
+          background:
+            "radial-gradient(circle, hsla(340, 82%, 60%, 0.5) 0%, transparent 70%)",
+          willChange: "transform",
+        }}
+      />
     </div>
   );
 };
