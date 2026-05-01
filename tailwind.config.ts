@@ -63,6 +63,21 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        serif: ['"Playfair Display"', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        cursive: ['"Great Vibes"', 'cursive'],
+      },
+      backgroundImage: {
+        'gradient-royal': 'var(--gradient-royal)',
+        'gradient-gold': 'var(--gradient-gold)',
+        'gradient-glass': 'var(--gradient-glass)',
+      },
+      boxShadow: {
+        'glow': 'var(--shadow-glow)',
+        'rose': 'var(--shadow-rose)',
+        'gold': 'var(--shadow-gold)',
+      },
       keyframes: {
         "accordion-down": {
           from: {
