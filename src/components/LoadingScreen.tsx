@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import loadingAudio from "@/FBDownloader.to-1552983689146798-(128kbps).mp3";
 
 interface LoadingScreenProps {
@@ -7,18 +7,22 @@ interface LoadingScreenProps {
 
 const LoadingScreen = ({ onDone }: LoadingScreenProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [soundBlocked, setSoundBlocked] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(onDone, 9000);
 
-    if (audioRef.current) {
-      const playPromise = audioRef.current.play();
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(() => {
-          // Autoplay can be blocked by browser policies.
-        });
+    const tryPlay = async () => {
+      if (!audioRef.current) return;
+      audioRef.current.load();
+      try {
+        await audioRef.current.play();
+      } catch {
+        setSoundBlocked(true);
       }
-    }
+    };
+
+    tryPlay();
 
     return () => {
       window.clearTimeout(timer);
@@ -28,6 +32,17 @@ const LoadingScreen = ({ onDone }: LoadingScreenProps) => {
       }
     };
   }, [onDone]);
+
+  const handleEnableSound = async () => {
+    if (!audioRef.current) return;
+
+    try {
+      await audioRef.current.play();
+      setSoundBlocked(false);
+    } catch {
+      setSoundBlocked(true);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 text-white">
@@ -49,9 +64,18 @@ const LoadingScreen = ({ onDone }: LoadingScreenProps) => {
           <div className="mt-8 h-3 w-full max-w-lg overflow-hidden rounded-full bg-white/15">
             <div className="h-full w-0 rounded-full bg-pink-400 animate-loadingProgress" />
           </div>
+          {soundBlocked && (
+            <button
+              type="button"
+              onClick={handleEnableSound}
+              className="mt-6 rounded-full border border-pink-300/80 bg-pink-500/20 px-6 py-3 text-sm font-semibold text-pink-100 transition hover:bg-pink-500/35"
+            >
+              Tap to enable sound
+            </button>
+          )}
         </div>
       </div>
-      <audio ref={audioRef} src={loadingAudio} preload="auto" />
+      <audio ref={audioRef} src={loadingAudio} preload="auto" playsInline />
     </div>
   );
 };
